@@ -1,0 +1,232 @@
+import type { Action } from "svelte/action";
+import { array, type ZodSchema } from "zod";
+import equal from "fast-deep-equal";
+import { parseFormData } from "./parse-form-data.js";
+
+type ToBoolean<T> = T extends Date
+  ? boolean
+  : T extends object
+    ? PropertiesToBoolean<T>
+    : boolean;
+
+type PropertiesToBoolean<T> = T extends any
+  ? any
+  : {
+      [K in keyof T]: ToBoolean<T[K]>;
+    };
+
+type ToStringArray<T> = T extends Date
+  ? string[] | undefined
+  : T extends object
+    ? PropertiesToStringArray<T>
+    : string[] | undefined;
+
+type PropertiesToStringArray<T> = T extends any
+  ? any
+  : {
+      [K in keyof T]: ToStringArray<T[K]>;
+    };
+
+export function createForm<Schema extends ZodSchema>(props: {
+  schema: Schema;
+  initialValues?: Schema["_type"];
+  onSubmit?: (data: any) => Promise<void | boolean> | (void | boolean);
+  onSuccess?: () => Promise<void> | void;
+  onError?: (error: any) => Promise<void> | void;
+}) {
+  let form: HTMLFormElement;
+  let data: any = $state({});
+  let errors: any = $state({});
+  let touched: any = $state({});
+  let isValid = $state(false);
+  let isDirty = $state(false);
+  let isSubmitting = $state(false);
+
+  const handleFormChange = () => {
+    const newData = parseFormData(new FormData(form));
+    if (!equal(data, newData)) {
+      data = newData;
+      isDirty = true;
+    }
+  };
+
+  const handleFormInput = () => {
+    const newData = parseFormData(new FormData(form));
+    if (!equal(data, newData)) {
+      data = newData;
+      isDirty = true;
+    }
+  };
+
+  const handleFormBlur = (event: any) => {
+    (event.target.name as string)
+      .split(".")
+      .reduce((position, path, index, array) => {
+        if (index + 1 < array.length) {
+          if (
+            !(
+              (Array.isArray(position) &&
+                position.length > Number(path) &&
+                position[Number(path)]) ||
+              path in position
+            )
+          ) {
+            position[isNaN(Number(path)) ? path : Number(path)] = isNaN(
+              Number(array[index + 1]),
+            )
+              ? {}
+              : [];
+          }
+        } else {
+          if (!position[isNaN(Number(path)) ? path : Number(path)]) {
+            position[isNaN(Number(path)) ? path : Number(path)] = true;
+          }
+        }
+
+        return position[isNaN(Number(path)) ? path : Number(path)];
+      }, touched);
+  };
+
+  const handleFormSubmit = async (event: Event) => {
+    event.preventDefault();
+
+    isSubmitting = true;
+
+    if (validate()) {
+      if (props.onSubmit) {
+        props.onSubmit(data);
+      } else {
+        const response = await fetch("", {
+          method: "POST",
+          body: new FormData(form),
+        });
+
+        if (response.ok) {
+          if (props.onSuccess) {
+            await props.onSuccess();
+          }
+        } else {
+          if (props.onError) {
+            await props.onError(response);
+          }
+        }
+      }
+    } else {
+      if (props.onError) {
+        await props.onError({});
+      }
+    }
+
+    isSubmitting = false;
+  };
+
+  function map(errors: any, touched: any) {
+    if (
+      Object.prototype.toString.call(errors) === "[object Array]" &&
+      errors.length &&
+      typeof errors[0] === "string"
+    ) {
+      return touched!! ? errors : undefined;
+    }
+
+    var diff: any = {};
+    for (var key in errors) {
+      var valueTouched = undefined;
+      if (touched[key] !== undefined) {
+        valueTouched = touched[key];
+      }
+
+      diff[key] = map(errors[key], valueTouched);
+    }
+
+    return diff;
+  }
+
+  let all = false;
+  const validate = (a?: boolean) => {
+    if (a) {
+      all = true;
+    }
+
+    const result = props.schema.safeParse(data);
+    if (result.success) {
+      isValid = true;
+      errors = {};
+      return true;
+    } else {
+      isValid = false;
+      errors = all
+        ? result.error.flatten().fieldErrors
+        : map(result.error.flatten().fieldErrors, touched);
+      return false;
+    }
+  };
+
+  const action: Action = (node) => {
+    if (!(node instanceof HTMLFormElement)) {
+      throw new Error();
+    }
+
+    form = node;
+
+    node.addEventListener("input", handleFormInput);
+    node.addEventListener("change", handleFormChange);
+    node.addEventListener("blur", handleFormBlur);
+    node.addEventListener("submit", handleFormSubmit);
+
+    return {
+      destroy() {
+        node.removeEventListener("input", handleFormInput);
+        node.removeEventListener("change", handleFormChange);
+        node.removeEventListener("blur", handleFormBlur);
+        node.removeEventListener("submit", handleFormSubmit);
+      },
+    };
+  };
+
+  if (props.initialValues) {
+    data = props.initialValues;
+  }
+
+  $effect(() => {
+    validate();
+  });
+
+  return {
+    action,
+    submit() {
+      form.requestSubmit();
+    },
+    reset() {
+      data = props.initialValues;
+      errors = {};
+      all = false;
+      isDirty = false;
+    },
+    get data() {
+      return data as Schema["_type"];
+    },
+    set data(v) {
+      data = v;
+    },
+    get touched() {
+      return isDirty as any;
+    },
+    set touched(v) {},
+    get errors() {
+      return errors as PropertiesToStringArray<Schema["_type"]>;
+    },
+    get isValid() {
+      return isValid;
+    },
+    get isDirty() {
+      return isDirty;
+    },
+    set isDirty(v) {
+      isDirty = v;
+    },
+    get isSubmitting() {
+      return isSubmitting;
+    },
+  };
+}

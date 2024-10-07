@@ -1,0 +1,47 @@
+{
+  "name": "@flit/svelte-form",
+  "version": "1.0.0",
+  "description": "A svelte form management library",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "svelte": "./dist/index.js"
+    }
+  },
+  "homepage": "https://github.com/jumper-de/svelte-form",
+  "bugs": "https://github.com/jumper-de/svelte-form/issues",
+  "svelte": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist",
+    "!dist/**/*.test.*",
+    "!dist/**/*.spec.*"
+  ],
+  "scripts": {
+    "build": "vite build && npm run package",
+    "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
+    "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
+    "package": "svelte-kit sync && svelte-package && publint",
+    "prepublishOnly": "npm run package",
+    "preview": "vite preview",
+    "start": "vite dev"
+  },
+  "dependencies": {
+    "fast-deep-equal": "^3.1.3"
+  },
+  "devDependencies": {
+    "@sveltejs/adapter-auto": "^3.2.5",
+    "@sveltejs/kit": "^2.6.3",
+    "@sveltejs/package": "^2.3.5",
+    "@sveltejs/vite-plugin-svelte": "^4.0.0-next.7",
+    "svelte": "^5.0.0-next.262",
+    "svelte-check": "^4.0.4",
+    "typescript": "^5.6.2",
+    "vite": "^5.4.8",
+    "zod": "^3.23.8"
+  },
+  "peerDependencies": {
+    "svelte": "^5.0.0-next.1"
+  }
+}
