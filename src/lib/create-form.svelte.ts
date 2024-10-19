@@ -94,7 +94,16 @@ export function createForm<Schema extends ZodSchema>(props: {
 
     if (validate()) {
       if (props.onSubmit) {
-        props.onSubmit(data);
+        try {
+          await props.onSubmit(data);
+          if (props.onSuccess) {
+            await props.onSuccess();
+          }
+        } catch (error: any) {
+          if (props.onError) {
+            await props.onError(error);
+          }
+        }
       } else {
         const response = await fetch("", {
           method: "POST",
