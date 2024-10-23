@@ -30,7 +30,9 @@ type PropertiesToStringArray<T> = T extends any
 export function createForm<Schema extends ZodSchema>(props: {
   schema: Schema;
   initialValues?: Schema["_type"];
-  onSubmit?: (data: any) => Promise<void | boolean> | (void | boolean);
+  onSubmit?: (
+    data: Schema["_type"],
+  ) => Promise<void | boolean> | (void | boolean);
   onSuccess?: () => Promise<void> | void;
   onError?: (error: any) => Promise<void> | void;
 }) {
