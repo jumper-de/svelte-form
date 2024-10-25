@@ -34,6 +34,8 @@
       console.log(error);
     },
   });
+
+  $inspect(form.data)
 </script>
 
 <svelte:head>
@@ -50,6 +52,10 @@
         type="text"
         style="display: block"
       />
+      {#if form.errors.name}
+        <span>{form.errors.name}</span>
+        <br />
+      {/if}
       <br />
       <label>Position*</label>
       <input

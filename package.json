@@ -1,6 +1,6 @@
 {
   "name": "@flit/svelte-form",
-  "version": "1.1.1",
+  "version": "1.1.4",
   "description": "A svelte form management library",
   "homepage": "https://github.com/jumper-de/svelte-form",
   "bugs": "https://github.com/jumper-de/svelte-form/issues",

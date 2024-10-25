@@ -64,7 +64,6 @@ export function createForm<Schema extends ZodSchema>(props: {
   };
 
   const handleFormBlur = (event: Event) => {
-    console.log("handleFormBlur");
     if (
       event.target &&
       "name" in event.target &&
