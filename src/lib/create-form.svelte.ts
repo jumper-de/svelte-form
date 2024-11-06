@@ -103,10 +103,11 @@ export function createForm<Schema extends ZodSchema>(props: {
 
     updateFormData();
 
-    if (validate()) {
+    const vData = validate();
+    if (vData) {
       if (props.onSubmit) {
         try {
-          await props.onSubmit(data);
+          await props.onSubmit(vData);
           if (props.onSuccess) {
             await props.onSuccess();
           }
@@ -172,7 +173,7 @@ export function createForm<Schema extends ZodSchema>(props: {
     if (result.success) {
       isValid = true;
       errors = {};
-      return true;
+      return result.data;
     } else {
       isValid = false;
       errors = all

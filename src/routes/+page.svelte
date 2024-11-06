@@ -10,6 +10,11 @@
         .regex(/^[A-Za-z ]*$/, "Can only contain letters and spaces")
         .min(1, "Required")
         .max(80, "Can't be longer then 80 characters"),
+      age: z
+        .coerce
+        .number()
+        .int()
+        .positive(),
       position: z
         .string()
         .trim()
@@ -53,8 +58,17 @@
         style="display: block"
       />
       {#if form.errors.name}
-        <span>{form.errors.name}</span>
-        <br />
+        <p style="color: red;">{form.errors.name}</p>
+      {/if}
+      <br />
+      <label>Age*</label>
+      <input
+        name="age"
+        type="text"
+        style="display: block"
+      />
+      {#if form.errors.age}
+        <p style="color: red;">{form.errors.age}</p>
       {/if}
       <br />
       <label>Position*</label>
