@@ -1,35 +1,32 @@
 import type { ZodSchema } from "zod";
 
+function isIndex(key: string) {
+  return Number.isSafeInteger(Number(key)) && parseInt(key) >= 0;
+}
+
 export function parseFormData(data: FormData) {
   let output: any = {};
 
-  for (const [key, value] of data) {
-    key.split(".").reduce((position, path, index, array) => {
-      if (index + 1 < array.length) {
+  for (const [path, value] of data) {
+    path.split(".").reduce((position, key: any, index, array) => {
+      key = isIndex(key) ? parseInt(key) : key;
+
+      if (index < array.length - 1) {
         if (
           !(
             (Array.isArray(position) &&
-              position.length > Number(path) &&
-              position[Number(path)]) ||
-            path in position
+              position.length > key &&
+              !!position[key]) ||
+            key in position
           )
         ) {
-          position[isNaN(Number(path)) ? path : Number(path)] = isNaN(
-            Number(array[index + 1]),
-          )
-            ? {}
-            : [];
+          position[key] = isIndex(array[index + 1]) ? [] : {};
         }
       } else {
-        if (
-          !position[isNaN(Number(path)) ? path : Number(path)] ||
-          value instanceof File
-        ) {
-          position[isNaN(Number(path)) ? path : Number(path)] = value;
-        }
+        position[key] = value;
       }
 
-      return position[isNaN(Number(path)) ? path : Number(path)];
+      return position[key];
     }, output);
   }
 
